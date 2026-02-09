@@ -62,7 +62,7 @@ jobs:
   
       - name: Generate Metadata
         run: |
-          python scripts/generate_metadata.py output/radar_deploy radar-rw ${{ env.DATE }}
+          python scripts/generate_metadata.py output/radar_deploy/radar radar-rw ${{ env.DATE }}
   
       - name: Clean old PNGs on R2
         run: |
