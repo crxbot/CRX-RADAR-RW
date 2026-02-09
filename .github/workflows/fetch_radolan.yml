@@ -48,10 +48,10 @@ jobs:
   
       - name: Prepare deploy folder
         run: |
-          mkdir -p output/radar_deploy/radar
-          # Kopiere nur die neueste PNG-Datei (nach Zeit sortiert)
+         mkdir -p output/radar_deploy/radar
+          # Nimm die neueste PNG
           latest_png=$(ls -1t output/radar_raw/*.png | head -n 1)
-          cp "$latest_png" output/radar_deploy/radar/radolan_rw.png
+          cp "$latest_png" output/radar_deploy/radar/
           # Optional: metadata.json in deploy folder
           if [ -f output/radar_raw/metadata.json ]; then
             cp output/radar_raw/metadata.json output/radar_deploy/
