@@ -76,9 +76,10 @@ jobs:
       - name: Upload current run to R2
         run: |
           # Lade die aktuelle PNG und metadata.json hoch
-          aws s3 cp output/radar_deploy/radar/radolan_rw.png s3://${{ secrets.R2_BUCKET }}/radar-rw/radar/radolan_rw.png \
+          aws s3 cp output/radar_deploy/radar/ s3://${{ secrets.R2_BUCKET }}/radar-rw/radar/ \
+            --recursive \
             --endpoint-url https://${{ secrets.R2_ACCOUNT_ID }}.r2.cloudflarestorage.com
-  
+            
           aws s3 cp output/radar_deploy/metadata.json s3://${{ secrets.R2_BUCKET }}/radar-rw/metadata.json \
             --endpoint-url https://${{ secrets.R2_ACCOUNT_ID }}.r2.cloudflarestorage.com
         env:
