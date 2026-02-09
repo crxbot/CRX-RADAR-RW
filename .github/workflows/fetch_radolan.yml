@@ -1,0 +1,78 @@
+name: Radar RW Workflow
+
+on:
+  workflow_dispatch:
+
+jobs:
+  generate_pngs:
+    runs-on: ubuntu-latest
+    needs: fetch_and_generate
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v3
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Download HDF5 radar data
+        run:
+          python download/download-rw.py
+
+      - name: Generate PNGs
+        run: |
+          mkdir -p output/radar
+          python scripts/generate_pngs_radar.py
+
+      - name: Upload PNGs artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: radar-rw-pngs
+          path: output/radar
+
+  deploy_to_r2:
+    runs-on: ubuntu-latest
+    needs: [fetch_and_generate, generate_pngs]
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v3
+
+      - name: Download PNGs artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: radar-rw-pngs
+          path: output/radar_raw
+
+      - name: Merge PNGs into deploy folder
+        run: |
+          mkdir -p output/radar_deploy
+          cp -r output/radar_raw/* output/radar_deploy/
+
+      - name: Generate Metadata
+        run: |
+          python scripts/generate_metadata.py output/radar_deploy radar-rw ${{ env.DATE }}
+
+      - name: Clean old runs on R2 except current
+        run: |
+          for run_folder in $(aws s3 ls s3://${{ secrets.R2_BUCKET }}/radar-rw/ --endpoint-url https://${{ secrets.R2_ACCOUNT_ID }}.r2.cloudflarestorage.com | awk '{print $2}' | sed 's#/##'); do
+            if [ "$run_folder" != "radar-rw/" ]; then
+              aws s3 rm s3://${{ secrets.R2_BUCKET }}/radar-rw/$run_folder --recursive --endpoint-url https://${{ secrets.R2_ACCOUNT_ID }}.r2.cloudflarestorage.com
+            fi
+          done
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+
+      - name: Upload current run and metadata.json to R2
+        run: |
+          aws s3 sync ./output/radar_deploy/ s3://${{ secrets.R2_BUCKET }}/radar-rw/ \
+            --endpoint-url https://${{ secrets.R2_ACCOUNT_ID }}.r2.cloudflarestorage.com
+          aws s3 cp ./output/radar_deploy/metadata.json s3://${{ secrets.R2_BUCKET }}/radar-rw/metadata.json \
+            --endpoint-url https://${{ secrets.R2_ACCOUNT_ID }}.r2.cloudflarestorage.com
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
