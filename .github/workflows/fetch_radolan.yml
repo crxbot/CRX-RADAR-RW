@@ -25,7 +25,7 @@ jobs:
       - name: Generate PNGs
         run: |
           mkdir -p output/radar
-          python scripts/generate_pngs_radar.py
+          python scripts/generate_pngs.py
 
       - name: Upload PNGs artifact
         uses: actions/upload-artifact@v4
