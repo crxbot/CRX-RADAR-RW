@@ -319,7 +319,7 @@ footer_ax = fig.add_axes(
 )
 footer_ax.axis("off")
 
-footer_ax.text(0.01, 0.85, "Niederschlag, 1 Std (mm)",
+footer_ax.text(0.01, 0.85, "Niederschlag, 1Std (mm)",
                fontsize=12, fontweight="bold", ha="left", va="top")
 footer_ax.text(0.01, 0.55, "Daten: Deutscher Wetterdienst",
                fontsize=8, ha="left", va="top")
